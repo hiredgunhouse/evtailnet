@@ -11,7 +11,11 @@ namespace evtailNet
             Program.StandardBackgroundColor = Console.BackgroundColor;
             Program.StandardForegroundColor = Console.ForegroundColor;
 
-            var el = new EventLog("Application", Environment.MachineName);
+            var logName = args.Length > 1
+                ? args[1]
+                : "Application";
+
+            var el = new EventLog(logName, Environment.MachineName);
             el.EntryWritten += (sender, eargs) =>
             {
                 var entry = eargs.Entry;
