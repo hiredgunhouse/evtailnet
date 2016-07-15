@@ -1,32 +1,30 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace evtailNet
 {
     class Program
     {
+        public static ConsoleColor StandardForegroundColor { get; set; }
+
+        public static ConsoleColor StandardBackgroundColor { get; set; }
 
         static void Main(string[] args)
         {
-            Program.StandardBackgroundColor = Console.BackgroundColor;
-            Program.StandardForegroundColor = Console.ForegroundColor;
+            SaveConsoleColors();
 
             var logName = args.Length > 1
                 ? args[1]
                 : "Application";
 
-            var el = new EventLog(logName, Environment.MachineName);
-            el.EntryWritten += (sender, eargs) =>
-            {
-                var entry = eargs.Entry;
+            TailEventLog(logName);
 
-                SetConsoleColors(entry.Source, entry.Message);
-                Console.Write("{0} {1} {2}", entry.TimeGenerated, entry.Source, entry.Message);
-                if (!entry.Message.EndsWith(Environment.NewLine))
-                    Console.Write(Environment.NewLine);
-            };
-            el.EnableRaisingEvents = true;
+            StartCommandLoop();
+        }
 
+        private static void StartCommandLoop()
+        {
             //Thread.Sleep(TimeSpan.FromHours(24));
             var quit = false;
             do
@@ -44,27 +42,56 @@ namespace evtailNet
             } while (!quit);
         }
 
-        public static ConsoleColor StandardBackgroundColor { get; set; }
-        public static ConsoleColor StandardForegroundColor { get; set; }
+        private static void TailEventLog(string logName)
+        {
+            var el = new EventLog(logName, Environment.MachineName);
+            el.EntryWritten += (sender, eargs) =>
+            {
+                var entry = eargs.Entry;
+
+                SetConsoleColors(entry.Source, entry.Message);
+                Console.Write("{0} {1} {2}", entry.TimeGenerated, entry.Source, entry.Message);
+                if (!entry.Message.EndsWith(Environment.NewLine))
+                    Console.Write(Environment.NewLine);
+                ReSetConsoleColors();
+            };
+            el.EnableRaisingEvents = true;
+        }
+
+        private static void ReSetConsoleColors()
+        {
+            Console.BackgroundColor = Program.StandardBackgroundColor;
+            Console.ForegroundColor = Program.StandardForegroundColor;
+        }
+
+        private static void SaveConsoleColors()
+        {
+            Program.StandardBackgroundColor = Console.BackgroundColor;
+            Program.StandardForegroundColor = Console.ForegroundColor;
+        }
 
         private static void SetConsoleColors(string source, string message)
         {
-            if (message.Contains("ERROR"))
+            if (IsRedCandidate(message))
             {
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.ForegroundColor = ConsoleColor.White;
-                return;
             }
+        }
 
-            if (message.Contains("exception") || message.Contains("Exception"))
+        private static bool IsRedCandidate(string message)
+        {
+            // TODO move this to config file
+            var patters = new[]
             {
-                Console.BackgroundColor = ConsoleColor.Red;
-                Console.ForegroundColor = ConsoleColor.White;
-                return;
-            }
+                "[Error]",
+                "[Fatal]",
+                "ERROR",
+                "exception",
+                "Exception"
+            };
 
-            Console.BackgroundColor = Program.StandardBackgroundColor;
-            Console.ForegroundColor = Program.StandardForegroundColor;
+            return patters.Any(message.Contains);
         }
     }
 }
