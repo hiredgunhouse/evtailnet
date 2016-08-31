@@ -1,0 +1,12 @@
+{
+    "logName": "Application",
+    "errorStrings": [
+        "[Error]",
+        "[Fatal]",
+        "ERROR",
+        "exception",
+        "Exception"
+    ],
+    "outputFile":  "r:\\evtail.log",
+    "outputToConsole": true
+}

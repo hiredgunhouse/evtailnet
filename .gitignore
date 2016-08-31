@@ -6,3 +6,6 @@ evtailnet/obj/
 .build.bat.un~
 evtailNet.v12.suo
 .vs/
+evtailnet/evtailNet.csproj.user
+packages/NConsoler.2.0.0.0/
+packages/Newtonsoft.Json.9.0.1/
